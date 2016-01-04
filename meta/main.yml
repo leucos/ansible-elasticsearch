@@ -1,0 +1,20 @@
+---
+
+dependencies: 
+  - role: ansible-java
+  - role: ansible-ferm
+    src: https://github.com/leucos/ansible-ferm.git
+    when: ferm_enabled | default(false)
+
+galaxy_info:
+  author: Michel Blanc
+  company: devops.works
+  description: Ansible elasticsearch role
+  license: MIT
+  min_ansible_version: 1.6
+  platforms:
+  - name: Ubuntu
+    versions:
+    - all
+  categories:
+  - web

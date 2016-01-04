@@ -1,0 +1,40 @@
+- name: Adds repository key
+  apt_key:
+    url: '{{ elasticsearch_repo_key }}'
+    state: present
+
+- name: Adds repos
+  apt_repository: repo="{{ elasticsearch_repo_path }}"
+
+- name: Installs elasticsearch
+  apt: pkg=elasticsearch state=present
+  notify: Start elasticsearch
+
+- name: Enables elasticsearch at boot
+  service: name=elasticsearch enabled=yes
+
+- name: Adds plugins
+  elasticsearch_plugin: 
+    state: present 
+    name: "{{ item }}"
+  # command: /usr/share/elasticsearch/bin/plugin install {{ item }}
+  with_items: elasticsearch_plugins
+  notify: Restart elasticsearch
+  tags: elasticsearch:plugins
+
+- name: Adds elasticsearch config
+  template: 
+    src: elasticsearch.yml.j2
+    dest: "{{ elasticsearch_path.conf }}/elasticsearch.yml"
+  tags: elasticsearch:config
+  notify: Restart elasticsearch
+
+- name: Adds ferm filtering
+  template:
+    src: "../templates/ferm.j2"
+    dest: /etc/ferm/filter-input.d/60_elasticsearch.conf
+  when: ferm_enabled
+  tags: 
+    - ferm
+    - elasticsearch:ferm
+  notify: Restart ferm
