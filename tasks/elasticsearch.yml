@@ -13,11 +13,18 @@
 - name: Enables elasticsearch at boot
   service: name=elasticsearch enabled=yes
 
+  # This requires Ansible 2.0
+  #- name: Adds plugins
+  #elasticsearch_plugin: 
+  #  state: present 
+  #  name: "{{ item }}"
+  ## command: /usr/share/elasticsearch/bin/plugin install {{ item }}
+  #with_items: elasticsearch_plugins
+  #notify: Restart elasticsearch
+  #tags: elasticsearch:plugins
+
 - name: Adds plugins
-  elasticsearch_plugin: 
-    state: present 
-    name: "{{ item }}"
-  # command: /usr/share/elasticsearch/bin/plugin install {{ item }}
+  command: /usr/share/elasticsearch/bin/plugin install {{ item }}
   with_items: elasticsearch_plugins
   notify: Restart elasticsearch
   tags: elasticsearch:plugins
