@@ -1,70 +1,70 @@
 # Choose version
 elasticsearch_version: 1.7 # or 2.x, 3.x
+
+# repo.
 elasticsearch_repo_path: "deb http://packages.elastic.co/elasticsearch/{{ elasticsearch_version }}/debian stable main"
 
-elasticsearch_action:
-  destructive_requires_name: "true"
+# action.
+elasticsearch_action_destructive_requires_name: "true"
 
-elasticsearch_bootstrap:
-  mlockall: "false"
+#bootstrap.
+elasticsearch_bootstrap_mlockall: "false"
 
-elasticsearch_cluster:
-  # A name for the cluster; should be an Ansible group name too
-  name: False
-  routing_allocation_node_initial_primaries_recoveries: 4
-  routing_allocation_node_concurrent_recoveries: 2
+# cluster.
+elasticsearch_cluster_name: False
+elasticsearch_cluster_routing_allocation_node_initial_primaries_recoveries: 4
+elasticsearch_cluster_routing_allocation_node_concurrent_recoveries: 2
 
-elasticsearch_discovery_zen:
-  minimum_master_nodes: 1
-  ping_timeout: 3s
-  ping_multicast_enabled: "true"
+# discovery.zen.
+## discovery.zen.ping.unicast.hosts will be automatically set according to
+## cluster name (which is an Ansible group name too)
+elasticsearch_discovery_zen_minimum_master_nodes: 1
+elasticsearch_discovery_zen_ping_timeout: 3s
+elasticsearch_discovery_zen_ping_multicast_enabled: "true"
 
-# discovery.zen. ping.unicast.hosts will be automatically set according to
-# cluster name (which is an Ansible group name too)
 
-elasticsearch_http:
-  enabled: "true"
-  port: 9200
-  max_content_length: False
+# http.
+elasticsearch_http_enabled: "true"
+elasticsearch_http_port: 9200
+elasticsearch_http_max_content_length: False
 
-elasticsearch_index:
-  number_of_shards: 5
-  number_of_replicas: 1
+# index.
+elasticsearch_index_number_of_shards: 5
+elasticsearch_index_number_of_replicas: 1
 
-elasticsearch_indices:
-  recovery_max_bytes_per_sec: 20mb
-  concurent_streams: 5
+# indices.
+elasticsearch_indices_recovery_max_bytes_per_sec: 20mb
+elasticsearch_indices_concurent_streams: 5
 
-elasticsearch_network:
-  # World address
-  bind_host:  0.0.0.0
-  # address for inter-nodes communication
-  publish_host: False
-  # interface on which inter-nodes communication takes place
-  publish_interface: False
-  # Sets both bind & publish
-  host: False
-  max_content_length: False
+# network.
+## World address
+elasticsearch_network_bind_host:  0.0.0.0
+## address for inter-nodes communication
+elasticsearch_network_publish_host: False
+## interface on which inter-nodes communication takes place
+elasticsearch_network_publish_interface: False
+## Sets both bind & publish
+elasticsearch_network_host: False
+elasticsearch_network_max_content_length: False
 
-elasticsearch_node:
-  name: "{{ inventory_hostname }}"
-  master: "true"
-  data: "true"
-  rack: False
-  max_local_storage_nodes: False
+# node.
+elasticsearch_node_name: "{{ inventory_hostname }}"
+elasticsearch_node_master: "true"
+elasticsearch_node_data: "true"
+elasticsearch_node_rack: False
+elasticsearch_node_max_local_storage_nodes: False
 
-# Note that elasticsearch_path.data can be an array
-elasticsearch_path:
-  conf: /etc/elasticsearch/
-  data: /var/lib/elasticsearch
-  work: /tmp/elasticsearch
-  logs: /var/log/elasticsearch
-#  plugins: ??
+# path.
+## Note that elasticsearch_path.data can be an array
+elasticsearch_path_conf: /etc/elasticsearch/
+elasticsearch_path_data: /var/lib/elasticsearch
+elasticsearch_path_work: /tmp/elasticsearch
+elasticsearch_path_logs: /var/log/elasticsearch
 
 # Plugins to install
 elasticsearch_plugins: []
 
-elasticsearch_transport_tcp:
-  port: 9300
-  compress: "false"
-  interface: lo
+# transport.tcp.
+elasticsearch_transport_tcp_port: 9300
+elasticsearch_transport_tcp_compress: "false"
+elasticsearch_transport_tcp_interface: lo

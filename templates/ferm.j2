@@ -1,13 +1,13 @@
 {% import 'variables.inc' as var with context %}
 
 # Allow access to clients
-protocol tcp dport {{ elasticsearch_http.port }} {
+protocol tcp dport {{ elasticsearch_http_port }} {
   @def $ITEMS = ( @ipfilter( ( {{ var.client_hosts_allow | unique | join(" ") }} ) ) );
   saddr $ITEMS ACCEPT;
 }
 
 # Allow access to nodes
-protocol tcp dport {{ elasticsearch_transport_tcp.port }} {
+protocol tcp dport {{ elasticsearch_transport_tcp_port }} {
   @def $ITEMS = ( @ipfilter( ( {{ var.unicast_hosts_allow | unique | join(" ") }} ) ) );
   saddr $ITEMS ACCEPT;
 }

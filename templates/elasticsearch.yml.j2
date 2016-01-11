@@ -10,8 +10,8 @@
 # Cluster name identifies your cluster for auto-discovery. If you're running
 # multiple clusters on the same network, make sure you're using unique names.
 
-{% if elasticsearch_cluster.name %}
-cluster.name: {{ elasticsearch_cluster.name }}
+{% if elasticsearch_cluster_name %}
+cluster.name: {{ elasticsearch_cluster_name }}
 {% endif %}
 
 #################################### Node #####################################
@@ -20,19 +20,19 @@ cluster.name: {{ elasticsearch_cluster.name }}
 # from configuring them manually. You can tie this node to a specific name:
 #
 
-node.name: "{{ elasticsearch_node.name }}"
+node.name: "{{ elasticsearch_node_name | default(inventory_hostname) }}"
 
 # Every node can be configured to allow or deny being eligible as the master,
 # and to allow or deny to store the data.
 #
 # Allow this node to be eligible as a master node (enabled by default):
 #
-node.master: {{ elasticsearch_node.master }}
+node.master: {{ elasticsearch_node_master }}
 
 #
 # Allow this node to store data (enabled by default):
 #
-node.data: {{ elasticsearch_node.data }}
+node.data: {{ elasticsearch_node_data }}
 
 # Use the Cluster Health API [http://localhost:9200/_cluster/health], the
 # Node Info API [http://localhost:9200/_nodes] or GUI tools
@@ -45,14 +45,14 @@ node.data: {{ elasticsearch_node.data }}
 # for customized shard allocation filtering, or allocation awareness. An attribute
 # is a simple key value pair, similar to node.key: value, here is an example:
 #
-{% if elasticsearch_node.rack %}
-node.rack: {{ elasticsearch_node.rack }}
+{% if elasticsearch_node_rack %}
+node.rack: {{ elasticsearch_node_rack }}
 {% endif %}
 
 # By default, multiple nodes are allowed to start from the same installation location
 # to disable it, set the following:
-{% if elasticsearch_node.max_local_storage_nodes %}
-node.rack: {{ elasticsearch_node.max_local_storage_nodes }}
+{% if elasticsearch_node_max_local_storage_nodes %}
+node.max_local_storage_nodes: {{ elasticsearch_node_max_local_storage_nodes }}
 {% endif %}
 
 #################################### Index ####################################
@@ -70,11 +70,11 @@ node.rack: {{ elasticsearch_node.max_local_storage_nodes }}
 
 # Set the number of shards (splits) of an index (5 by default):
 
-index.number_of_shards: {{ elasticsearch_index.number_of_shards }}
+index.number_of_shards: {{ elasticsearch_index_number_of_shards }}
 
 # Set the number of replicas (additional copies) of an index (1 by default):
 
-index.number_of_replicas: {{ elasticsearch_index.number_of_replicas }}
+index.number_of_replicas: {{ elasticsearch_index_number_of_replicas }}
 
 # Use the Index Status API (<http://localhost:9200/A/_status>) to inspect
 # the index status.
@@ -83,7 +83,7 @@ index.number_of_replicas: {{ elasticsearch_index.number_of_replicas }}
 
 # Path to directory containing configuration (this file and logging.yml):
 
-path.conf: {{ elasticsearch_path.conf }}
+path.conf: {{ elasticsearch_path_conf }}
 
 # Path to directory where to store index data allocated for this node.
 
@@ -94,11 +94,11 @@ path.data: /path/to/data
 # space on creation. For example:
 
 {% set __data_paths = [] %}
-{% if elasticsearch_path.data is defined %}
-{%   if elasticsearch_path.data is string %}
-{%     set _ = __data_paths.append(elasticsearch_path.data) %}
+{% if elasticsearch_path_data is defined %}
+{%   if elasticsearch_path_data is string %}
+{%     set _ = __data_paths.append(elasticsearch_path_data) %}
 {%   else %}
-{%     for element in elasticsearch_path.data %}
+{%     for element in elasticsearch_path_data %}
 {%       set _ = __data_paths.append(element) %}
 {%     endfor %}
 {%   endif %}
@@ -108,11 +108,11 @@ path.data: {{ __data_paths | join(",") }}
 
 # Path to temporary files:
 
-path.work: {{ elasticsearch_path.work }}
+path.work: {{ elasticsearch_path_work }}
 
 # Path to log files:
 
-path.logs: {{ elasticsearch_path.logs }}
+path.logs: {{ elasticsearch_path_logs }}
 
 # Path to where plugins are installed:
 #
@@ -133,8 +133,9 @@ path.logs: {{ elasticsearch_path.logs }}
 #
 # Set this property to true to lock the memory:
 
-bootstrap.mlockall: {{ elasticsearch_bootstrap.mlockall }}
-
+{% if elasticsearch_bootstrap_mlockall %}
+bootstrap.mlockall: {{ elasticsearch_bootstrap_mlockall }}
+{% endif %}
 # Make sure that the ES_MIN_MEM and ES_MAX_MEM environment variables are set
 # to the same value, and that the machine has enough memory to allocate
 # for Elasticsearch, leaving enough memory for the operating system itself.
@@ -152,38 +153,40 @@ bootstrap.mlockall: {{ elasticsearch_bootstrap.mlockall }}
 
 # Set both 'bind_host' and 'publish_host':
 
-{% if "host" in elasticsearch_network %}
+{% if elasticsearch_network_host %}
 network.host: {{ hostvars[inventory_hostname]['ansible_' + elasticsearch_network.interface].ipv4.address }}
 {% endif %}
 
 # Set a custom port for the node to node communication (9300 by default):
 
-transport.tcp.port: {{ elasticsearch_transport_tcp.port }}
+transport.tcp.port: {{ elasticsearch_transport_tcp_port }}
 
 # Enable compression for all communication between nodes (disabled by default):
 
-transport.tcp.compress: {{ elasticsearch_transport_tcp.compress }}
+transport.tcp.compress: {{ elasticsearch_transport_tcp_compress }}
 
-{% if "publish_host" in elasticsearch_transport %}
-transport.publish_host: "{{ elasticsearch_network.publish_host }}"
+## TODO: THIS IS WEIRD (ansible)
+{% if elasticsearch_network_publish_host %}
+transport.publish_host: "{{ elasticsearch_network_publish_host }}"
 {% endif %}
 
-{% if "host" in elasticsearch_transport %}
+## TODO: THIS IS WEIRD (ansible)
+{% if elasticsearch_transport_host %}
 transport.host: "{{ hostvars[inventory_hostname]['ansible_' + elasticsearch_transport.interface].ipv4.address }}"
 {% endif %}
 
 # Set a custom port to listen for HTTP traffic:
 
-http.port: {{ elasticsearch_http.port }}
+http.port: {{ elasticsearch_http_port }}
 
 # Set a custom allowed content length:
-{% if "max_content_length" in elasticsearch_network %}
-http.max_content_length: {{ elasticsearch_network.max_content_length }}
+{% if elasticsearch_network_max_content_length %}
+http.max_content_length: {{ elasticsearch_network_max_content_length }}
 {% endif %}
 
 # Enable/Disable HTTP:
 
-http.enabled: {{ elasticsearch_http.enabled }}
+http.enabled: {{ elasticsearch_http_enabled }}
 
 
 ################################### Gateway ###################################
@@ -255,13 +258,13 @@ http.enabled: {{ elasticsearch_http.enabled }}
 # operational within the cluster. This should be set to a quorum/majority of 
 # the master-eligible nodes in the cluster.
 
-discovery.zen.minimum_master_nodes: {{ elasticsearch_discovery_zen.minimum_master_nodes }}
+discovery.zen.minimum_master_nodes: {{ elasticsearch_discovery_zen_minimum_master_nodes }}
 
 # Set the time to wait for ping responses from other nodes when discovering.
 # Set this option to a higher value on a slow or congested network
 # to minimize discovery failures:
 
-discovery.zen.ping.timeout: {{ elasticsearch_discovery_zen.ping_timeout }}
+discovery.zen.ping.timeout: {{ elasticsearch_discovery_zen_ping_timeout }}
 
 # For more information, see
 # <http://elasticsearch.org/guide/en/elasticsearch/reference/current/modules-discovery-zen.html>
@@ -272,16 +275,16 @@ discovery.zen.ping.timeout: {{ elasticsearch_discovery_zen.ping_timeout }}
 #
 # 1. Disable multicast discovery (enabled by default):
 
-discovery.zen.ping.multicast.enabled: {{ elasticsearch_discovery_zen.ping_multicast_enabled }}
+discovery.zen.ping.multicast.enabled: {{ elasticsearch_discovery_zen_ping_multicast_enabled }}
 
 # 2. Configure an initial list of master nodes in the cluster
 #    to perform discovery when new nodes (master or data) are started:
 
-# discovery.zen.ping.unicast.hosts:  elasticsearch_discovery_zen.ping_unicast_hosts | join(',') 
+# discovery.zen.ping.unicast.hosts:  elasticsearch_discovery_zen_ping_unicast_hosts | join(',') 
 
 {% set __unicast_hosts = [] %}
-{% if elasticsearch_cluster.name is defined %}
-{%   for hst in groups[elasticsearch_cluster.name] %}
+{% if elasticsearch_cluster_name is defined %}
+{%   for hst in groups[elasticsearch_cluster_name] %}
 {%     set _ = __unicast_hosts.append('"' + hostvars[hst]['ansible_' + elasticsearch_transport.interface].ipv4.address + ':' + elasticsearch_transport_tcp.port|string + '"') %}
 {%   endfor %}
 {% endif %}

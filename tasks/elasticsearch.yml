@@ -34,7 +34,7 @@
 - name: Adds elasticsearch config
   template: 
     src: elasticsearch.yml.j2
-    dest: "{{ elasticsearch_path.conf }}/elasticsearch.yml"
+    dest: "{{ elasticsearch_path_conf }}/elasticsearch.yml"
   tags: elasticsearch:config
   notify: Restart elasticsearch
 
