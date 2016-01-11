@@ -20,13 +20,15 @@
   #  name: "{{ item }}"
   ## command: /usr/share/elasticsearch/bin/plugin install {{ item }}
   #with_items: elasticsearch_plugins
-  #notify: Restart elasticsearch
+  ##notify: Restart elasticsearch
   #tags: elasticsearch:plugins
 
 - name: Adds plugins
   command: /usr/share/elasticsearch/bin/plugin install {{ item }}
   with_items: elasticsearch_plugins
-  notify: Restart elasticsearch
+  #notify: Restart elasticsearch
+  # We ignore error since we do not know if the plugin was already there or not
+  ignore_errors: true
   tags: elasticsearch:plugins
 
 - name: Adds elasticsearch config
