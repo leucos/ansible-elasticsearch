@@ -1,5 +1,13 @@
 - name: Start elasticsearch
   service: name=elasticsearch state=started
+  notify: Wait for elasticsearch
 
 - name: Restart elasticsearch
   service: name=elasticsearch state=restarted
+  notify: Wait for elasticsearch
+
+- name: Wait for elasticsearch
+  wait_for: 
+    host: "{{ hostvars[inventory_hostname]['ansible_' + elasticsearch_network_publish_interface].ipv4.address }}"
+    port: "{{ elasticsearch_http_port }}"
+    timeout: 30

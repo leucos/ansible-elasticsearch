@@ -65,6 +65,6 @@ elasticsearch_path_logs: /var/log/elasticsearch
 elasticsearch_plugins: []
 
 # transport.tcp.
+elasticsearch_transport_interface: lo
 elasticsearch_transport_tcp_port: 9300
 elasticsearch_transport_tcp_compress: "false"
-elasticsearch_transport_tcp_interface: lo

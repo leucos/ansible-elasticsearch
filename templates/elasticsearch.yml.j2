@@ -86,8 +86,6 @@ index.number_of_replicas: {{ elasticsearch_index_number_of_replicas }}
 path.conf: {{ elasticsearch_path_conf }}
 
 # Path to directory where to store index data allocated for this node.
-
-path.data: /path/to/data
 #
 # Can optionally include more than one location, causing data to be striped across
 # the locations (a la RAID 0) on a file level, favouring locations with most free
@@ -154,30 +152,20 @@ bootstrap.mlockall: {{ elasticsearch_bootstrap_mlockall }}
 # Set both 'bind_host' and 'publish_host':
 
 {% if elasticsearch_network_host %}
-network.host: {{ hostvars[inventory_hostname]['ansible_' + elasticsearch_network.interface].ipv4.address }}
+network.host: _{{elasticsearch_network_publish_interface}}:ipv4_
 {% endif %}
 
 # Set a custom port for the node to node communication (9300 by default):
-
 transport.tcp.port: {{ elasticsearch_transport_tcp_port }}
+#transport.publish_host: _{{elasticsearch_transport_publish_interface}}:ipv4_
+transport.host: _{{elasticsearch_transport_publish_interface}}:ipv4_
 
 # Enable compression for all communication between nodes (disabled by default):
-
 transport.tcp.compress: {{ elasticsearch_transport_tcp_compress }}
 
-## TODO: THIS IS WEIRD (ansible)
-{% if elasticsearch_network_publish_host %}
-transport.publish_host: "{{ elasticsearch_network_publish_host }}"
-{% endif %}
-
-## TODO: THIS IS WEIRD (ansible)
-{% if elasticsearch_transport_host %}
-transport.host: "{{ hostvars[inventory_hostname]['ansible_' + elasticsearch_transport.interface].ipv4.address }}"
-{% endif %}
-
 # Set a custom port to listen for HTTP traffic:
-
 http.port: {{ elasticsearch_http_port }}
+http.bind_host: _{{elasticsearch_network_publish_interface}}:ipv4_
 
 # Set a custom allowed content length:
 {% if elasticsearch_network_max_content_length %}
@@ -284,8 +272,8 @@ discovery.zen.ping.multicast.enabled: {{ elasticsearch_discovery_zen_ping_multic
 
 {% set __unicast_hosts = [] %}
 {% if elasticsearch_cluster_name is defined %}
-{%   for hst in groups[elasticsearch_cluster_name] %}
-{%     set _ = __unicast_hosts.append('"' + hostvars[hst]['ansible_' + elasticsearch_transport.interface].ipv4.address + ':' + elasticsearch_transport_tcp.port|string + '"') %}
+{%   for hst in groups[elasticsearch_cluster_group] %}
+{%     set _ = __unicast_hosts.append('"' + hostvars[hst]['ansible_' + elasticsearch_transport_interface].ipv4.address + ':' + elasticsearch_transport_tcp_port|string + '"') %}
 {%   endfor %}
 {% endif %}
 
