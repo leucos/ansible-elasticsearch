@@ -64,6 +64,11 @@ elasticsearch_path_logs: /var/log/elasticsearch
 # Plugins to install
 elasticsearch_plugins: []
 
+# S3 bucket for snapshots
+elasticsearch_s3_access_key: false
+elasticsearch_s3_secret_key: false
+elasticsearch_snapshot_s3_bucket: false
+
 # transport.tcp.
 elasticsearch_transport_interface: lo
 elasticsearch_transport_tcp_port: 9300

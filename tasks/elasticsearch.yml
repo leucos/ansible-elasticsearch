@@ -38,6 +38,12 @@
   tags: elasticsearch:config
   notify: Restart elasticsearch
 
+- name: Adds es-snapper
+  copy:
+    src: es-snapper
+    dest: /usr/local/bin/es-snapper
+    mode: 0777
+
 - name: Adds ferm filtering
   template:
     src: "../templates/ferm.j2"
@@ -47,3 +53,48 @@
     - ferm
     - elasticsearch:ferm
   notify: Restart ferm
+
+# Doesn't work, God knows why
+# - name: Ensure elasticsearch is started
+#   service: name=elasticsearch state=started
+
+# - name: Ensure httplib is present
+#   apt: pkg=python-httplib2 state=present
+#   tags: foo
+#
+# - set_fact:
+#     __es_base_url: "http://{{ hostvars[inventory_hostname]['ansible_' + elasticsearch_network_publish_interface].ipv4.address }}:{{ elasticsearch_http_port }}"
+#   tags: foo
+#
+# - name: Check if elasticsearch_snapshot_s3_repo is present
+#   uri:
+#     url: "{{ __es_base_url }}/_snapshot/{{ elasticsearch_snapshot_s3_repo }}"
+#     status_code: 200,404
+#   run_once: true
+#   register: __es_snap_repo
+#   always_run: true
+#   tags: foo
+
+# - set_fact:
+#     what:
+#       type: "s3"
+#       settings:
+#         bucket: "{{ elasticsearch_snapshot_s3_bucket }}"
+#   tags: foo
+
+# - debug: var=what
+#   tags: foo
+
+# - debug: msg="{{ what | to_json }}"
+#   tags: foo
+
+# - name: Creates repository
+#   uri:
+#     url: "{{ __es_base_url }}/_snapshot/{{ elasticsearch_snapshot_s3_repo }}"
+#     method: PUT
+#     body_format: raw
+#     body: "{{what}}"
+#   run_once: true
+#   when: __es_snap_repo.status == 404
+#   tags: foo
+
