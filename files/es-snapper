@@ -4,13 +4,25 @@ LOGDIR=/var/log/es-snapper
 
 usage() {
   echo
-  echo "$0 -r <REPOS> [-h HOST] [-p PORT] [-i INDICES] [-s SNAPSHOT]"
-  echo "  REPOS: repository"
-  echo "  HOST: elasticsearch hostname (default: 127.0.0.1)"
-  echo "  PORT: elasticsearch port hostname (default: 9200)"
-  echo "  INDICES: coma-separated list of indices (default: all indices)"
-  echo "  SNAPSHOT: snapshot name (default: date formatted as YYYYMMDDHHMMSS)"
+  echo "$0 -r <REPOS> [-h HOST] [-p PORT] [-i INDICES] [-s SNAPSHOT] [-b BUCKET]"
+  echo "  -r REPOS   : repository"
+  echo "  -h HOST    : elasticsearch hostname (default: 127.0.0.1)"
+  echo "  -p PORT    : elasticsearch port hostname (default: 9200)"
+  echo "  -i INDICES : coma-separated list of indices (default: all indices)"
+  echo "  -s SNAPSHOT: snapshot name (default: date formatted as YYYYMMDDHHMMSS)"
+  echo "  -b BUCKET  : creates repository in S3 BUCKET if it does not exist (default: skip)"
   echo
+}
+
+check_and_create_repository() {
+  # Set host
+  URI="http://${HOST}:${PORT}/_snapshot/${REPOSITORY}"
+  RESULT=$(curl -sX PUT ${URI} --data "{ \"type\": \"s3\", \"settings\": { \"bucket\": \"${BUCKET}\" }}")
+
+  if ! echo ${RESULT} | grep -F "acknowledged\":true" > /dev/null; then
+    echo -e "\nError: Unable to create repository: \n"
+    echo ${RESULT}
+  fi
 }
 
 snapshot() {
@@ -30,7 +42,7 @@ snapshot() {
   exit 1
 }
 
-while getopts ":h:p:r:s:i:" opt; do
+while getopts ":h:p:r:s:i:b:" opt; do
   case $opt in
     h)
       HOST=$OPTARG
@@ -46,6 +58,9 @@ while getopts ":h:p:r:s:i:" opt; do
       ;;
     i)
       INDICES=$OPTARG
+      ;;
+    b)
+      BUCKET=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -66,6 +81,10 @@ if [ -z $REPOSITORY ]; then
   echo "Error: repository (-r) must be specified"
   usage
   exit 1
+fi
+
+if [ ! -z $BUCKET ]; then
+  check_and_create_repository
 fi
 
 snapshot
