@@ -8,7 +8,7 @@
 
 - name: Wait for elasticsearch
   wait_for: 
-    host: "{{ hostvars[inventory_hostname]['ansible_' + elasticsearch_network_publish_interface].ipv4.address }}"
+    host: "{{ hostvars[inventory_hostname]['ansible_' + (elasticsearch_network_publish_interface or ansible_interfaces[1]) ].ipv4.address }}"
     port: "{{ elasticsearch_http_port }}"
     timeout: 30
   notify: Delay for elasticsearch
@@ -16,7 +16,7 @@
 # Delay so host can rejoin cluster before we go to the next one
 - name: Delay for elasticsearch
   wait_for: 
-    host: "{{ hostvars[inventory_hostname]['ansible_' + elasticsearch_network_publish_interface].ipv4.address }}"
+    host: "{{ hostvars[inventory_hostname]['ansible_' + (elasticsearch_network_publish_interface or ansible_interfaces[1]) ].ipv4.address }}"
     port: "{{ elasticsearch_http_port }}"
     timeout: 5
     delay: 15
