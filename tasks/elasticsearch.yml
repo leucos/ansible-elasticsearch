@@ -44,6 +44,14 @@
     dest: /usr/local/bin/es-snapper
     mode: 0777
 
+- name: Adds datadog config
+  template:
+    src: elasticsearch_datadog.yml.j2
+    dest: /etc/dd-agent/conf.d/elastic.yaml
+    mode: 0644
+  when: datadog_enabled is defined and datadog_enabled
+  notify: Restart datadog-agent
+
 - name: Adds ferm filtering
   template:
     src: "../templates/ferm.j2"
