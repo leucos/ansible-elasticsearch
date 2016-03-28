@@ -282,7 +282,7 @@ discovery.zen.ping.multicast.enabled: {{ elasticsearch_discovery_zen_ping_multic
 {% set __unicast_hosts = [] %}
 {% if elasticsearch_cluster_name is defined %}
 {%   for hst in groups[elasticsearch_cluster_group] %}
-{%     set _ = __unicast_hosts.append('"' + hostvars[hst]['ansible_' + elasticsearch_transport_interface].ipv4.address + ':' + elasticsearch_transport_tcp_port|string + '"') %}
+{%     set _ = __unicast_hosts.append('"' + hostvars[hst]['ansible_' + elasticsearch_transport_publish_interface].ipv4.address + ':' + elasticsearch_transport_tcp_port|string + '"') %}
 {%   endfor %}
 {% endif %}
 
