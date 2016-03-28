@@ -162,14 +162,19 @@ network.host: _{{elasticsearch_network_publish_interface}}:ipv4_
 # Set a custom port for the node to node communication (9300 by default):
 transport.tcp.port: {{ elasticsearch_transport_tcp_port }}
 #transport.publish_host: _{{elasticsearch_transport_publish_interface}}:ipv4_
+
+{% if elasticsearch_transport_publish_interface %}
 transport.host: _{{elasticsearch_transport_publish_interface}}:ipv4_
+{% endif %}
 
 # Enable compression for all communication between nodes (disabled by default):
 transport.tcp.compress: {{ elasticsearch_transport_tcp_compress }}
 
 # Set a custom port to listen for HTTP traffic:
 http.port: {{ elasticsearch_http_port }}
+{% if elasticsearch_network_publish_interface %}
 http.bind_host: _{{elasticsearch_network_publish_interface}}:ipv4_
+{% endif %}
 
 # Set a custom allowed content length:
 {% if elasticsearch_network_max_content_length %}
@@ -341,3 +346,18 @@ discovery.zen.ping.unicast.hosts: [ {{ __unicast_hosts | join(',') }} ]
 # it unless you need it is recommended (it is disabled by default).
 #
 #http.jsonp.enable: true
+
+# S3 snapshots
+# You need to add elasticsearch/elasticsearch-cloud-aws plugin
+# https://github.com/elastic/elasticsearch-cloud-aws#s3-repository
+{% if elasticsearch_snapshot_s3_bucket != false %}
+cloud:
+  aws:
+    access_key: {{ elasticsearch_s3_access_key }}
+    secret_key: {{ elasticsearch_s3_secret_key }}
+
+repositories:
+  s3:
+    bucket: "{{ elasticsearch_snapshot_s3_bucket }}"
+#     region: ""
+{% endif %}

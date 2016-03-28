@@ -1,0 +1,90 @@
+#!/bin/bash
+
+LOGDIR=/var/log/es-snapper
+
+usage() {
+  echo
+  echo "$0 -r <REPOS> [-h HOST] [-p PORT] [-i INDICES] [-s SNAPSHOT] [-b BUCKET]"
+  echo "  -r REPOS   : repository"
+  echo "  -h HOST    : elasticsearch hostname (default: 127.0.0.1)"
+  echo "  -p PORT    : elasticsearch port hostname (default: 9200)"
+  echo "  -i INDICES : coma-separated list of indices (default: all indices)"
+  echo "  -s SNAPSHOT: snapshot name (default: date formatted as YYYYMMDDHHMMSS)"
+  echo "  -b BUCKET  : creates repository in S3 BUCKET if it does not exist (default: skip)"
+  echo
+}
+
+check_and_create_repository() {
+  # Set host
+  URI="http://${HOST}:${PORT}/_snapshot/${REPOSITORY}"
+  RESULT=$(curl -sX PUT ${URI} --data "{ \"type\": \"s3\", \"settings\": { \"bucket\": \"${BUCKET}\" }}")
+
+  if ! echo ${RESULT} | grep -F "acknowledged\":true" > /dev/null; then
+    echo -e "\nError: Unable to create repository: \n"
+    echo ${RESULT}
+  fi
+}
+
+snapshot() {
+  [ -d ${LOGDIR} ] || mkdir ${LOGDIR}
+
+  # Set host
+  URI="http://${HOST}:${PORT}/_snapshot/${REPOSITORY}/${SNAPSHOT}?wait_for_completion=true"
+  if [ -z $INDICES ]; then
+    curl -sX PUT ${URI} > ${LOGDIR}/${SNAPSHOT}.log
+  else
+    curl -sX PUT --data "{ \"indices\": \"${INDICES}\" }" ${URI} > ${LOGDIR}/${SNAPSHOT}.log
+  fi
+
+  grep -F "state\":\"SUCCESS" ${LOGDIR}/${SNAPSHOT}.log > /dev/null && exit 0
+
+  echo "Error: Unable to create snapshot. Check ${LOGDIR}/${SNAPSHOT}.log"
+  exit 1
+}
+
+while getopts ":h:p:r:s:i:b:" opt; do
+  case $opt in
+    h)
+      HOST=$OPTARG
+      ;;
+    p)
+      PORT=$OPTARG
+      ;;
+    r)
+      REPOSITORY=$OPTARG
+      ;;
+    s)
+      SNAPSHOT=$OPTARG
+      ;;
+    i)
+      INDICES=$OPTARG
+      ;;
+    b)
+      BUCKET=$OPTARG
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+HOST=${HOST:-"127.0.0.1"}
+PORT=${PORT:-9200}
+SNAPSHOT=${SNAPSHOT:-$(date +"%Y%m%d%H%M%S")}
+
+if [ -z $REPOSITORY ]; then
+  echo "Error: repository (-r) must be specified"
+  usage
+  exit 1
+fi
+
+if [ ! -z $BUCKET ]; then
+  check_and_create_repository
+fi
+
+snapshot
