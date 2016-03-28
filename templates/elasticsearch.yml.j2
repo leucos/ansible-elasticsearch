@@ -151,11 +151,11 @@ bootstrap.mlockall: {{ elasticsearch_bootstrap_mlockall }}
 
 # Set both 'bind_host' and 'publish_host':
 
-{% if elasticsearch_network_host != False %}
+{% if elasticsearch_network_host %}
 {%   if elasticsearch_network_host | ipaddr %}
-network.host: {{elasticsearch_network_publish_interface}}
+network.host: {{ elasticsearch_network_host }}
 {%   else %}
-network.host: _{{elasticsearch_network_publish_interface}}:ipv4_
+network.host: _{{ elasticsearch_network_host }}:ipv4_
 {%   endif %}
 {% endif %}
 
