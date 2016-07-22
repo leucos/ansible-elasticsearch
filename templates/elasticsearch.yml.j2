@@ -116,6 +116,10 @@ path.logs: {{ elasticsearch_path_logs }}
 #
 #path.plugins: /path/to/plugins
 
+# Enable or disable scripts
+script.inline: {{ elasticsearch_disable_dynamic  }}
+script.indexed: {{ elasticsearch_disable_dynamic  }}
+
 
 #################################### Plugin ###################################
 

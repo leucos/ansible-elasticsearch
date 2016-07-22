@@ -15,6 +15,9 @@ elasticsearch_cluster_name: False
 elasticsearch_cluster_routing_allocation_node_initial_primaries_recoveries: 4
 elasticsearch_cluster_routing_allocation_node_concurrent_recoveries: 2
 
+# Disable scripts by default
+elasticsearch_disable_dynamic: "false"
+
 # discovery.zen.
 ## discovery.zen.ping.unicast.hosts will be automatically set according to
 ## cluster name (which is an Ansible group name too)
