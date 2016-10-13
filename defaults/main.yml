@@ -61,6 +61,7 @@ elasticsearch_node_max_local_storage_nodes: False
 ## Note that elasticsearch_path.data can be an array
 elasticsearch_path_conf: /etc/elasticsearch/
 elasticsearch_path_data: /var/lib/elasticsearch
+elasticsearch_path_repo: false
 elasticsearch_path_work: /tmp/elasticsearch
 elasticsearch_path_logs: /var/log/elasticsearch
 
@@ -71,6 +72,10 @@ elasticsearch_plugins: []
 elasticsearch_s3_access_key: false
 elasticsearch_s3_secret_key: false
 elasticsearch_snapshot_s3_bucket: false
+
+elasticsearch_snapshot_device: false
+elasticsearch_snapshot_mount_point: false
+
 
 # transport.tcp.
 elasticsearch_transport_interface: lo

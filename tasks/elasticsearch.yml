@@ -43,6 +43,7 @@
     src: es-snapper
     dest: /usr/local/bin/es-snapper
     mode: 0777
+  tags: "elasticsearch:snapshots"
 
 - name: Adds datadog config
   template:
@@ -61,6 +62,7 @@
     - ferm
     - elasticsearch:ferm
   notify: Restart ferm
+
 
 # Doesn't work, God knows why
 # - name: Ensure elasticsearch is started
