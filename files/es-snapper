@@ -1,60 +1,100 @@
 #!/bin/bash
 
+set -e
+
 LOGDIR=/var/log/es-snapper
+
 
 usage() {
   echo
-  echo "$0 -r <REPOS> [-h HOST] [-p PORT] [-i INDICES] [-s SNAPSHOT] [-b BUCKET]"
-  echo "  -r REPOS   : repository"
-  echo "  -h HOST    : elasticsearch hostname (default: 127.0.0.1)"
-  echo "  -p PORT    : elasticsearch port hostname (default: 9200)"
-  echo "  -i INDICES : coma-separated list of indices (default: all indices)"
-  echo "  -s SNAPSHOT: snapshot name (default: date formatted as YYYYMMDDHHMMSS)"
-  echo "  -b BUCKET  : creates repository in S3 BUCKET if it does not exist (default: skip)"
-  echo "  -f PATH    : creates repository on shared (locally mounted) filesystem (default: skip)"
+  echo "$0 -r <REPOS> [-h HOST] [-p PORT] [-i INDICES] [-s SNAPSHOT] [-b BUCKET | -f PATH] [-k KEEP] [-P SCRIPT ]"
+  echo "  -r REPOS    : repository"
+  echo "  -h HOST     : elasticsearch hostname (default: 127.0.0.1)"
+  echo "  -p PORT     : elasticsearch port hostname (default: 9200)"
+  echo "  -i INDICES  : coma-separated (no spaces) list of indices (default: all indices)"
+  echo "  -s SNAPSHOT : snapshot name (default: date formatted as YYYYMMDDHHMMSS)"
+  echo "  -b BUCKET   : creates repository in S3 BUCKET if it does not exist (default: skip)"
+  echo "  -f PATH     : creates repository on shared (locally mounted) filesystem (default: skip)"
+  echo "  -k KEEP     : how many old snapshots do we keep (default: everything is kept)"
+  echo "  -P SCRIPT   : script to execute after run (default: none)"
   echo
 }
 
 check_and_create_s3_repository() {
+  HOST=$1
+  PORT=$2
+  REPOSITORY=$3
+  BUCKET=$4
+
   # Set host
   URI="http://${HOST}:${PORT}/_snapshot/${REPOSITORY}"
   RESULT=$(curl -sX PUT ${URI} --data "{ \"type\": \"s3\", \"settings\": { \"bucket\": \"${BUCKET}\" }}")
 
   if ! echo ${RESULT} | grep -F "acknowledged\":true" > /dev/null; then
-    echo -e "\nError: Unable to create repository: \n"
-    echo ${RESULT}
+    echo "Error: Unable to create repository: ${RESULT}" >&2
   fi
 }
 
 check_and_create_fs_repository() {
+  HOST=$1
+  PORT=$2
+  REPOSITORY=$3
+  FILESYSTEM=$4
+
   # Set host
   URI="http://${HOST}:${PORT}/_snapshot/${REPOSITORY}"
   RESULT=$(curl -sX PUT ${URI} --data "{ \"type\": \"fs\", \"settings\": { \"location\": \"${FILESYSTEM}\", \"compress\": \"true\"}}")
 
   if ! echo ${RESULT} | grep -F "acknowledged\":true" > /dev/null; then
-    echo -e "\nError: Unable to create repository: \n"
-    echo ${RESULT}
+    echo "Error: Unable to create repository: ${RESULT}" >&2
   fi
 }
 
 snapshot() {
-  [ -d ${LOGDIR} ] || mkdir ${LOGDIR}
+  HOST=$1
+  PORT=$2
+  REPOSITORY=$3
+  SNAPSHOT=$4
+  INDICES=$5
+  LOGFILE=$6
 
+  echo "Snapshot starting" > ${LOGFILE}
   # Set host
   URI="http://${HOST}:${PORT}/_snapshot/${REPOSITORY}/${SNAPSHOT}?wait_for_completion=true"
   if [ -z $INDICES ]; then
-    curl -sX PUT ${URI} > ${LOGDIR}/${SNAPSHOT}.log
+    curl -sX PUT ${URI} >> ${LOGFILE} 
   else
-    curl -sX PUT --data "{ \"indices\": \"${INDICES}\" }" ${URI} > ${LOGDIR}/${SNAPSHOT}.log
+    curl -sX PUT --data "{ \"indices\": \"${INDICES}\" }" ${URI} >> ${LOGFILE} 
   fi
 
-  grep -F "state\":\"SUCCESS" ${LOGDIR}/${SNAPSHOT}.log > /dev/null && exit 0
+  grep -F "state\":\"SUCCESS" ${LOGFILE} > /dev/null && exit 0
 
-  echo "Error: Unable to create snapshot. Check ${LOGDIR}/${SNAPSHOT}.log"
+  echo "Error: Unable to create snapshot. Check ${LOGFILE}" >&2
   exit 1
 }
 
-while getopts ":h:p:r:s:i:b:f:" opt; do
+purge() {
+  HOST=$1
+  PORT=$2
+  REPOSITORY=$3
+  KEEP=$4
+
+  SNAPSHOTS=`curl -s -XGET "${HOST}:${PORT}/_snapshot/${REPOSITORY}/_all" \
+    | jq -r ".snapshots[:-${KEEP}][].snapshot"`
+
+  for SNAPSHOT in $SNAPSHOTS; do
+    echo -n "Deleting snapshot: ${SNAPSHOT}..."
+    if curl -s -XDELETE "${HOST}:${PORT}/_snapshot/${REPOSITORY}/${SNAPSHOT}" -o /dev/null; then
+      echo "ok"
+    else
+      echo "FAILED !!!" >&2
+      echo "Something fishy just happenned - bailing out" >&2
+      exit 1
+  done
+}
+
+
+while getopts ":h:p:r:s:i:b:f:k:" opt; do
   case $opt in
     h)
       HOST=$OPTARG
@@ -76,6 +116,10 @@ while getopts ":h:p:r:s:i:b:f:" opt; do
       ;;
     f)
       FILESYSTEM=$OPTARG
+    k)
+      KEEP=$OPTARG      
+    P)
+      POST=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -88,22 +132,42 @@ while getopts ":h:p:r:s:i:b:f:" opt; do
   esac
 done
 
-HOST=${HOST:-"127.0.0.1"}
-PORT=${PORT:-9200}
-SNAPSHOT=${SNAPSHOT:-$(date +"%Y%m%d%H%M%S")}
+
+# # #
 
 if [ -z $REPOSITORY ]; then
-  echo "Error: repository (-r) must be specified"
+  echo "Error: repository (-r) must be specified" >&2
   usage
   exit 1
 fi
 
+[ -d ${LOGDIR} ] || mkdir ${LOGDIR}
+
+HOST=${HOST:-"127.0.0.1"}
+PORT=${PORT:-9200}
+SNAPSHOT=${SNAPSHOT:-$(date +"%Y%m%d%H%M%S")}
+LOGFILE=${LOGDIR}/${SNAPSHOT}_$(date +%Y%m%d_%H%M%S).log
+
+if [ ! -z $BUCKET ! -z $FILESYSTEM ]; then
+  echo "Error: a repository can not be on a filesystem and on S3 at the same time" >&2
+  usage
+  exit 1
+fi  
+
 if [ ! -z $BUCKET ]; then
-  check_and_create_s3_repository
+  check_and_create_s3_repository $HOST $PORT $REPOSITORY $BUCKET
 fi
 
 if [ ! -z $FILESYSTEM ]; then
-  check_and_create_fs_repository
+  check_and_create_fs_repository $HOST $PORT $REPOSITORY $FILESYSTEM
 fi
 
-snapshot
+snapshot $HOST $PORT $REPOSITORY $SNAPSHOT $INDICES $LOGFILE
+
+if [ ! -z $KEEP ]; then
+  purge $HOST $PORT $REPOSITORY $KEEP
+fi
+
+if [ ! -z $POST ]; then
+  $POST
+fi
