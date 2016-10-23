@@ -56,7 +56,6 @@ snapshot() {
   REPOSITORY=$3
   SNAPSHOT=$4
   INDICES=$5
-  LOGFILE=$6
 
   echo "Snapshot starting" > ${LOGFILE}
   # Set host
@@ -67,7 +66,7 @@ snapshot() {
     curl -sX PUT --data "{ \"indices\": \"${INDICES}\" }" ${URI} >> ${LOGFILE} 
   fi
 
-  grep -F "state\":\"SUCCESS" ${LOGFILE} > /dev/null && exit 0
+  grep -F "state\":\"SUCCESS" ${LOGFILE} > /dev/null && return 0
 
   echo "Error: Unable to create snapshot. Check ${LOGFILE}" >&2
   exit 1
@@ -82,7 +81,7 @@ purge() {
   SNAPSHOTS=`curl -s -XGET "${HOST}:${PORT}/_snapshot/${REPOSITORY}/_all" \
     | jq -r ".snapshots[:-${KEEP}][].snapshot"`
 
-  for SNAPSHOT in $SNAPSHOTS; do
+  for SNAPSHOT in ${SNAPSHOTS}; do
     echo -n "Deleting snapshot: ${SNAPSHOT}..."
     if curl -s -XDELETE "${HOST}:${PORT}/_snapshot/${REPOSITORY}/${SNAPSHOT}" -o /dev/null; then
       echo "ok"
@@ -90,6 +89,7 @@ purge() {
       echo "FAILED !!!" >&2
       echo "Something fishy just happenned - bailing out" >&2
       exit 1
+    fi
   done
 }
 
@@ -116,8 +116,10 @@ while getopts ":h:p:r:s:i:b:f:k:" opt; do
       ;;
     f)
       FILESYSTEM=$OPTARG
+      ;;
     k)
-      KEEP=$OPTARG      
+      KEEP=$OPTARG
+      ;;
     P)
       POST=$OPTARG
       ;;
@@ -148,7 +150,7 @@ PORT=${PORT:-9200}
 SNAPSHOT=${SNAPSHOT:-$(date +"%Y%m%d%H%M%S")}
 LOGFILE=${LOGDIR}/${SNAPSHOT}_$(date +%Y%m%d_%H%M%S).log
 
-if [ ! -z $BUCKET ! -z $FILESYSTEM ]; then
+if [ ! -z $BUCKET ] && [ ! -z $FILESYSTEM ]; then
   echo "Error: a repository can not be on a filesystem and on S3 at the same time" >&2
   usage
   exit 1
@@ -162,7 +164,7 @@ if [ ! -z $FILESYSTEM ]; then
   check_and_create_fs_repository $HOST $PORT $REPOSITORY $FILESYSTEM
 fi
 
-snapshot $HOST $PORT $REPOSITORY $SNAPSHOT $INDICES $LOGFILE
+snapshot $HOST $PORT $REPOSITORY $SNAPSHOT $INDICES
 
 if [ ! -z $KEEP ]; then
   purge $HOST $PORT $REPOSITORY $KEEP
