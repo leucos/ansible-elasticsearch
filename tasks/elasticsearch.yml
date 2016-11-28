@@ -36,9 +36,16 @@
     name: elasticsearch-curator
 
 - name: Adds elasticsearch config
-  template: 
+  template:
     src: elasticsearch.yml.j2
     dest: "{{ elasticsearch_path_conf }}/elasticsearch.yml"
+  tags: elasticsearch:config
+  notify: Restart elasticsearch
+
+- name: Adds elasticsearch defaults
+  template:
+    src: elasticsearch_defaults.j2
+    dest: "/etc/default/elasticsearch"
   tags: elasticsearch:config
   notify: Restart elasticsearch
 
