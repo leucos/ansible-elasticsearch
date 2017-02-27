@@ -1,6 +1,9 @@
-- include: check_vars.yml tags=elasticsearch,check
+- include: check_vars.yml
+  tags: ['elasticsearch', 'check']
 
-- include: elasticsearch.yml tags=elasticsearch
+- include: elasticsearch.yml
+  tags: ['elasticsearch']
 
-- include: elasticsearch-fs-snaps.yml tags=elasticsearch,elasticsearch:snapshots
+- include: elasticsearch-fs-snaps.yml
+  tags: ['elasticsearch', 'elasticsearch:snapshots']
   when: elasticsearch_snapshot_mount_point and elasticsearch_snapshot_device
