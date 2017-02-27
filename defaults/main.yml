@@ -24,7 +24,6 @@ elasticsearch_disable_dynamic: "false"
 ## cluster name (which is an Ansible group name too)
 elasticsearch_discovery_zen_minimum_master_nodes: 1
 elasticsearch_discovery_zen_ping_timeout: 3s
-elasticsearch_discovery_zen_ping_multicast_enabled: "true"
 
 elasticsearch_heap_size: 512g
 
