@@ -46,7 +46,7 @@ node.data: {{ elasticsearch_node_data }}
 # is a simple key value pair, similar to node.key: value, here is an example:
 #
 {% if elasticsearch_node_rack %}
-node.rack: {{ elasticsearch_node_rack }}
+node.attr.rack: {{ elasticsearch_node_rack }}
 {% endif %}
 
 # By default, multiple nodes are allowed to start from the same installation location
@@ -55,29 +55,6 @@ node.rack: {{ elasticsearch_node_rack }}
 node.max_local_storage_nodes: {{ elasticsearch_node_max_local_storage_nodes }}
 {% endif %}
 
-#################################### Index ####################################
-
-# You can set a number of options (such as shard/replica options, mapping
-# or analyzer definitions, translog settings, ...) for indices globally,
-# in this file.
-#
-# Note, that it makes more sense to configure index settings specifically for
-# a certain index, either when creating it or by using the index templates API.
-#
-# See <http://elasticsearch.org/guide/en/elasticsearch/reference/current/index-modules.html> and
-# <http://elasticsearch.org/guide/en/elasticsearch/reference/current/indices-create-index.html>
-# for more information.
-
-# Set the number of shards (splits) of an index (5 by default):
-
-index.number_of_shards: {{ elasticsearch_index_number_of_shards }}
-
-# Set the number of replicas (additional copies) of an index (1 by default):
-
-index.number_of_replicas: {{ elasticsearch_index_number_of_replicas }}
-
-# Use the Index Status API (<http://localhost:9200/A/_status>) to inspect
-# the index status.
 
 #################################### Paths ####################################
 
@@ -104,10 +81,6 @@ path.conf: {{ elasticsearch_path_conf }}
 
 path.data: {{ __data_paths | join(",") }}
 
-# Path to temporary files:
-
-path.work: {{ elasticsearch_path_work }}
-
 # Path to log files:
 
 path.logs: {{ elasticsearch_path_logs }}
@@ -119,10 +92,6 @@ path.logs: {{ elasticsearch_path_logs }}
 {% if elasticsearch_path_repo %}
 path.repo: [ "{{ elasticsearch_path_repo }}" ]
 {% endif %}
-
-# Enable or disable scripts
-script.inline: {{ elasticsearch_disable_dynamic  }}
-script.indexed: {{ elasticsearch_disable_dynamic  }}
 
 
 #################################### Plugin ###################################
@@ -140,7 +109,7 @@ script.indexed: {{ elasticsearch_disable_dynamic  }}
 # Set this property to true to lock the memory:
 
 {% if elasticsearch_bootstrap_mlockall %}
-bootstrap.mlockall: {{ elasticsearch_bootstrap_mlockall }}
+bootstrap.memory_lock: {{ elasticsearch_bootstrap_mlockall }}
 {% endif %}
 # Make sure that the ES_MIN_MEM and ES_MAX_MEM environment variables are set
 # to the same value, and that the machine has enough memory to allocate
@@ -169,10 +138,9 @@ network.host: _{{ elasticsearch_network_host }}:ipv4_
 
 # Set a custom port for the node to node communication (9300 by default):
 transport.tcp.port: {{ elasticsearch_transport_tcp_port }}
-#transport.publish_host: _{{elasticsearch_transport_publish_interface}}:ipv4_
 
-{% if elasticsearch_transport_publish_interface %}
-transport.host: _{{elasticsearch_transport_publish_interface}}:ipv4_
+{% if elasticsearch_transport_publish_interface is defined %}
+transport.host: _{{ elasticsearch_transport_publish_interface }}:ipv4_
 {% endif %}
 
 # Enable compression for all communication between nodes (disabled by default):
@@ -269,7 +237,7 @@ discovery.zen.minimum_master_nodes: {{ elasticsearch_discovery_zen_minimum_maste
 # Set this option to a higher value on a slow or congested network
 # to minimize discovery failures:
 
-discovery.zen.ping.timeout: {{ elasticsearch_discovery_zen_ping_timeout }}
+discovery.zen.ping_timeout: {{ elasticsearch_discovery_zen_ping_timeout }}
 
 # For more information, see
 # <http://elasticsearch.org/guide/en/elasticsearch/reference/current/modules-discovery-zen.html>
@@ -290,7 +258,11 @@ discovery.zen.ping.multicast.enabled: {{ elasticsearch_discovery_zen_ping_multic
 {% set __unicast_hosts = [] %}
 {% if elasticsearch_cluster_name is defined %}
 {%   for hst in groups[elasticsearch_cluster_group] %}
-{%     set _ = __unicast_hosts.append('"' + hostvars[hst]['ansible_' + elasticsearch_transport_publish_interface].ipv4.address + ':' + elasticsearch_transport_tcp_port|string + '"') %}
+{%     if elasticsearch_transport_publish_interface is defined %}
+{%       set _ = __unicast_hosts.append('"' + hostvars[hst]['ansible_' + elasticsearch_transport_publish_interface].ipv4.address + ':' + elasticsearch_transport_tcp_port|string + '"') %}
+{%     else %}
+{%       set _ = __unicast_hosts.append('"' + hostvars[hst]['ansible_default_ipv4'].address + ':' + elasticsearch_transport_tcp_port|string + '"') %}
+{%     endif %}
 {%   endfor %}
 {% endif %}
 

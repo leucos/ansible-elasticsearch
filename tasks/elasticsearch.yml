@@ -4,32 +4,32 @@
     state: present
 
 - name: Adds repos
-  apt_repository: repo="{{ elasticsearch_repo_path }}"
+  apt_repository:
+    repo: "{{ elasticsearch_repo_path }}"
 
 - name: Installs elasticsearch
-  apt: pkg=elasticsearch state=present
+  apt:
+    pkg: elasticsearch
+    state: present
   notify: Start elasticsearch
 
 - name: Enables elasticsearch at boot
-  service: name=elasticsearch enabled=yes
+  service:
+    name: elasticsearch
+    enabled: yes
 
-  # This requires Ansible 2.0
-  #- name: Adds plugins
-  #elasticsearch_plugin: 
-  #  state: present 
-  #  name: "{{ item }}"
-  ## command: /usr/share/elasticsearch/bin/plugin install {{ item }}
-  #with_items: elasticsearch_plugins
-  ##notify: Restart elasticsearch
-  #tags: elasticsearch:plugins
+    #- name: Adds plugins
+    #  elasticsearch_plugin:
+    #    state: present
+    #    name: "{{ item }}"
+    #    plugin_bin: /usr/share/elasticsearch/bin/elasticsearch-plugin
+    #  with_items: elasticsearch_plugins
+    #  notify: Restart elasticsearch
+    #  tags: elasticsearch:plugins
 
-- name: Adds plugins
-  command: /usr/share/elasticsearch/bin/plugin install {{ item }}
-  with_items: elasticsearch_plugins
-  #notify: Restart elasticsearch
-  # We ignore error since we do not know if the plugin was already there or not
-  ignore_errors: true
-  tags: elasticsearch:plugins
+- name: Adds pip
+  apt:
+    pkg: python-pip
 
 - name: Adds curator
   pip:
@@ -42,10 +42,10 @@
   tags: elasticsearch:config
   notify: Restart elasticsearch
 
-- name: Adds elasticsearch defaults
+- name: Adds elasticsearch JVM options
   template:
-    src: elasticsearch_defaults.j2
-    dest: "/etc/default/elasticsearch"
+    src: jvm.options.j2
+    dest: "/etc/elasticsearch/jvm.options"
   tags: elasticsearch:config
   notify: Restart elasticsearch
 

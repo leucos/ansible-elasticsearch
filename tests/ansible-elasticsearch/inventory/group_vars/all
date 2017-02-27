@@ -1,0 +1,2 @@
+elasticsearch_cluster_name: foobar
+elasticsearch_cluster_group: all

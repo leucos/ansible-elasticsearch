@@ -1,8 +1,8 @@
 # Choose version
-elasticsearch_version: 1.7 # or 2.x, 3.x
+elasticsearch_version: 5.2 # or 2.x, 3.x
 
 # repo.
-elasticsearch_repo_path: "deb http://packages.elastic.co/elasticsearch/{{ elasticsearch_version }}/debian stable main"
+elasticsearch_repo_path: "deb https://artifacts.elastic.co/packages/5.x/apt stable main"
 
 # action.
 elasticsearch_action_destructive_requires_name: "true"
@@ -12,6 +12,7 @@ elasticsearch_bootstrap_mlockall: "false"
 
 # cluster.
 elasticsearch_cluster_name: False
+elasticsearch_cluster_group: False
 elasticsearch_cluster_routing_allocation_node_initial_primaries_recoveries: 4
 elasticsearch_cluster_routing_allocation_node_concurrent_recoveries: 2
 
@@ -25,6 +26,7 @@ elasticsearch_discovery_zen_minimum_master_nodes: 1
 elasticsearch_discovery_zen_ping_timeout: 3s
 elasticsearch_discovery_zen_ping_multicast_enabled: "true"
 
+elasticsearch_heap_size: 512g
 
 # http.
 elasticsearch_http_enabled: "true"
@@ -81,3 +83,5 @@ elasticsearch_snapshot_mount_point: false
 elasticsearch_transport_interface: lo
 elasticsearch_transport_tcp_port: 9300
 elasticsearch_transport_tcp_compress: "false"
+
+ferm_enabled: false
