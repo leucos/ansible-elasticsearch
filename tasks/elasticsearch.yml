@@ -49,6 +49,13 @@
   tags: elasticsearch:config
   notify: Restart elasticsearch
 
+- name: Adds elasticsearch log4j config
+  template:
+    src: log4j2.properties.j2
+    dest: "/etc/elasticsearch/log4j2.properties"
+  tags: elasticsearch:config
+  notify: Restart elasticsearch
+
 - name: Adds es-snapper
   copy:
     src: es-snapper
@@ -56,23 +63,15 @@
     mode: 0755
   tags: "elasticsearch:snapshots"
 
-- name: Adds datadog config
-  template:
-    src: elasticsearch_datadog.yml.j2
-    dest: /etc/dd-agent/conf.d/elastic.yaml
-    mode: 0644
-  when: datadog_enabled is defined and datadog_enabled
-  notify: Restart datadog-agent
-
-- name: Adds ferm filtering
-  template:
-    src: "../templates/ferm.j2"
-    dest: /etc/ferm/filter-input.d/60_elasticsearch.conf
-  when: ferm_enabled
-  tags: 
-    - ferm
-    - elasticsearch:ferm
-  notify: Restart ferm
+# - name: Adds ferm filtering
+#   template:
+#     src: "../templates/ferm.j2"
+#     dest: /etc/ferm/filter-input.d/60_elasticsearch.conf
+#   when: ferm_enabled
+#   tags: 
+#     - ferm
+#     - elasticsearch:ferm
+#   notify: Restart ferm
 
 
 # Doesn't work, God knows why
