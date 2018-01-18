@@ -20,6 +20,7 @@
     state: directory
     owner: elasticsearch
     group: elasticsearch
+    recurse: yes
 
 - name: Enables elasticsearch at boot
   service:
