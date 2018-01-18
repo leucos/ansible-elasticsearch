@@ -1,8 +1,8 @@
 # Choose version
-elasticsearch_version: 5.2 # or 2.x, 3.x
+elasticsearch_version: 5.x # or 2.x, 3.x
 
 # repo.
-elasticsearch_repo_path: "deb https://artifacts.elastic.co/packages/5.x/apt stable main"
+elasticsearch_repo_path: "deb https://artifacts.elastic.co/packages/{{ elasticsearch_version }}/apt stable main"
 
 # action.
 elasticsearch_action_destructive_requires_name: "true"
