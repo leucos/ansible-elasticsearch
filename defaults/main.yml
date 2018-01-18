@@ -60,7 +60,6 @@ elasticsearch_node_max_local_storage_nodes: False
 
 # path.
 ## Note that elasticsearch_path.data can be an array
-elasticsearch_path_conf: /etc/elasticsearch/
 elasticsearch_path_data: /var/lib/elasticsearch
 elasticsearch_path_repo: false
 elasticsearch_path_work: /tmp/elasticsearch
