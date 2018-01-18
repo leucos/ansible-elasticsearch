@@ -11,7 +11,15 @@
   apt:
     pkg: elasticsearch
     state: present
+  register: __elasticsearch_installed
   notify: Start elasticsearch
+
+- name: Chowns datadir if ES installed
+  file:
+    path: "{{ elasticsearch_path_data }}"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
 
 - name: Enables elasticsearch at boot
   service:
