@@ -1,7 +1,6 @@
 ---
 
-dependencies:
-  - role: ansible-java
+dependencies: []
 
 galaxy_info:
   author: Michel Blanc
